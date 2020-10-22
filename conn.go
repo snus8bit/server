@@ -108,6 +108,7 @@ func newSessionID() string {
 // goroutine, so use this channel to be notified when the connection can be
 // cleaned up.
 func (conn *Conn) Serve() {
+	defer conn.driver.Disconnect()
 	conn.logger.Print(conn.sessionID, "Connection Established")
 	// send welcome
 	conn.writeMessage(220, conn.server.WelcomeMessage)
