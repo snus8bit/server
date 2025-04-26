@@ -57,6 +57,10 @@ func (conn *Conn) PublicIp() string {
 	return conn.server.PublicIp
 }
 
+func (conn *Conn) RemoteIP() net.Addr {
+	return conn.conn.RemoteAddr()
+}
+
 func (conn *Conn) passiveListenIP() string {
 	var listenIP string
 	if len(conn.PublicIp()) > 0 {
@@ -204,16 +208,16 @@ func (conn *Conn) writeMessageMultiline(code int, message string) (wrote int, er
 // buildPath takes a client supplied path or filename and generates a safe
 // absolute path within their account sandbox.
 //
-//    buildpath("/")
-//    => "/"
-//    buildpath("one.txt")
-//    => "/one.txt"
-//    buildpath("/files/two.txt")
-//    => "/files/two.txt"
-//    buildpath("files/two.txt")
-//    => "/files/two.txt"
-//    buildpath("/../../../../etc/passwd")
-//    => "/etc/passwd"
+//	buildpath("/")
+//	=> "/"
+//	buildpath("one.txt")
+//	=> "/one.txt"
+//	buildpath("/files/two.txt")
+//	=> "/files/two.txt"
+//	buildpath("files/two.txt")
+//	=> "/files/two.txt"
+//	buildpath("/../../../../etc/passwd")
+//	=> "/etc/passwd"
 //
 // The driver implementation is responsible for deciding how to treat this path.
 // Obviously they MUST NOT just read the path off disk. The probably want to
