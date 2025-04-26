@@ -57,7 +57,7 @@ func (conn *Conn) PublicIp() string {
 	return conn.server.PublicIp
 }
 
-func (conn *Conn) RemoteIP() net.Addr {
+func (conn *Conn) RemoteAddr() net.Addr {
 	return conn.conn.RemoteAddr()
 }
 
@@ -113,7 +113,7 @@ func newSessionID() string {
 // cleaned up.
 func (conn *Conn) Serve() {
 	defer conn.driver.Disconnect()
-	conn.logger.Print(conn.sessionID, "Connection Established")
+	conn.logger.Printf(conn.sessionID, "Connection established with %s", conn.conn.RemoteAddr().String())
 	// send welcome
 	conn.writeMessage(220, conn.server.WelcomeMessage)
 	// read commands
