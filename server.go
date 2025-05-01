@@ -135,19 +135,18 @@ func serverOptsWithDefaults(opts *ServerOpts) *ServerOpts {
 // via an instance of ServerOpts. Calling this function in your code will
 // probably look something like this:
 //
-//     factory := &MyDriverFactory{}
-//     server  := server.NewServer(&server.ServerOpts{ Factory: factory })
+//	factory := &MyDriverFactory{}
+//	server  := server.NewServer(&server.ServerOpts{ Factory: factory })
 //
 // or:
 //
-//     factory := &MyDriverFactory{}
-//     opts    := &server.ServerOpts{
-//       Factory: factory,
-//       Port: 2000,
-//       Hostname: "127.0.0.1",
-//     }
-//     server  := server.NewServer(opts)
-//
+//	factory := &MyDriverFactory{}
+//	opts    := &server.ServerOpts{
+//	  Factory: factory,
+//	  Port: 2000,
+//	  Hostname: "127.0.0.1",
+//	}
+//	server  := server.NewServer(opts)
 func NewServer(opts *ServerOpts) *Server {
 	opts = serverOptsWithDefaults(opts)
 	s := new(Server)
@@ -200,8 +199,7 @@ func simpleTLSConfig(certFile, keyFile string) (*tls.Config, error) {
 // If the server fails to start for any reason, an error will be returned. Common
 // errors are trying to bind to a privileged port or something else is already
 // listening on the same port.
-//
-func (server *Server) ListenAndServe() error {
+func (server *Server) ListenAndServe(ctx context.Context) error {
 	var listener net.Listener
 	var err error
 	var curFeats = featCmds
@@ -230,15 +228,23 @@ func (server *Server) ListenAndServe() error {
 	sessionID := ""
 	server.logger.Printf(sessionID, "%s listening on %d", server.Name, server.Port)
 
-	return server.Serve(listener)
+	return server.Serve(ctx, listener)
 }
 
 // Serve accepts connections on a given net.Listener and handles each
 // request in a new goroutine.
-//
-func (server *Server) Serve(l net.Listener) error {
+func (server *Server) Serve(ctx context.Context, l net.Listener) error {
 	server.listener = l
-	server.ctx, server.cancel = context.WithCancel(context.Background())
+	server.ctx, server.cancel = context.WithCancel(ctx)
+	stopC := make(chan struct{})
+	defer close(stopC)
+	go func() {
+		select {
+		case <-ctx.Done():
+			server.listener.Close()
+		case <-stopC:
+		}
+	}()
 	sessionID := ""
 	for {
 		tcpConn, err := server.listener.Accept()
@@ -263,16 +269,4 @@ func (server *Server) Serve(l net.Listener) error {
 			go ftpConn.Serve()
 		}
 	}
-}
-
-// Shutdown will gracefully stop a server. Already connected clients will retain their connections
-func (server *Server) Shutdown() error {
-	if server.cancel != nil {
-		server.cancel()
-	}
-	if server.listener != nil {
-		return server.listener.Close()
-	}
-	// server wasnt even started
-	return nil
 }
