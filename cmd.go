@@ -768,9 +768,8 @@ func (cmd commandRetr) Execute(conn *Conn, param string) {
 	err = conn.sendOutofBandDataWriter(data)
 	if err != nil {
 		conn.writeMessage(551, "Error reading file")
-		return
 	}
-	conn.driver.TransferComplete(path)
+	conn.driver.TransferComplete(path, err)
 }
 
 type commandRest struct{}
