@@ -759,16 +759,18 @@ func (cmd commandRetr) Execute(conn *Conn, param string) {
 		conn.appendData = false
 	}()
 	bytes, data, err := conn.driver.GetFile(path, conn.lastFilePos)
-	if err == nil {
-		defer data.Close()
-		conn.writeMessage(150, fmt.Sprintf("Data transfer starting %v bytes", bytes))
-		err = conn.sendOutofBandDataWriter(data)
-		if err != nil {
-			conn.writeMessage(551, "Error reading file")
-		}
-	} else {
+	if err != nil {
 		conn.writeMessage(551, "File not available")
+		return
 	}
+	defer data.Close()
+	conn.writeMessage(150, fmt.Sprintf("Data transfer starting %v bytes", bytes))
+	err = conn.sendOutofBandDataWriter(data)
+	if err != nil {
+		conn.writeMessage(551, "Error reading file")
+		return
+	}
+	conn.driver.TransferComplete(path)
 }
 
 type commandRest struct{}
@@ -1149,14 +1151,14 @@ func (cmd commandSyst) Execute(conn *Conn, param string) {
 
 // commandType responds to the TYPE FTP command.
 //
-//  like the MODE and STRU commands, TYPE dates back to a time when the FTP
-//  protocol was more aware of the content of the files it was transferring, and
-//  would sometimes be expected to translate things like EOL markers on the fly.
+//	like the MODE and STRU commands, TYPE dates back to a time when the FTP
+//	protocol was more aware of the content of the files it was transferring, and
+//	would sometimes be expected to translate things like EOL markers on the fly.
 //
-//  Valid options were A(SCII), I(mage), E(BCDIC) or LN (for local type). Since
-//  we plan to just accept bytes from the client unchanged, I think Image mode is
-//  adequate. The RFC requires we accept ASCII mode however, so accept it, but
-//  ignore it.
+//	Valid options were A(SCII), I(mage), E(BCDIC) or LN (for local type). Since
+//	we plan to just accept bytes from the client unchanged, I think Image mode is
+//	adequate. The RFC requires we accept ASCII mode however, so accept it, but
+//	ignore it.
 type commandType struct{}
 
 func (cmd commandType) IsExtend() bool {

@@ -55,6 +55,9 @@ type Driver interface {
 	// returns - a string containing the file data to send to the client
 	GetFile(string, int64) (int64, io.ReadCloser, error)
 
+	// TransferComplete is called after client succedfully downloaded a file
+	TransferComplete(filename string)
+
 	// params  - destination path, an io.Reader containing the file data
 	// returns - the number of bytes writen and the first error encountered while writing, if any.
 	PutFile(string, io.Reader, bool) (int64, error)
