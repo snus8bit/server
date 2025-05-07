@@ -56,7 +56,7 @@ type Driver interface {
 	GetFile(string, int64) (int64, io.ReadCloser, error)
 
 	// TransferComplete is called after client downloaded a file
-	TransferComplete(filename string, err error)
+	TransferComplete(filename string, transferError error)
 
 	// params  - destination path, an io.Reader containing the file data
 	// returns - the number of bytes writen and the first error encountered while writing, if any.
