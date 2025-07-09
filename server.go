@@ -176,7 +176,7 @@ func (server *Server) newConn(tcpConn net.Conn, driver Driver) *Conn {
 		c.controlReader = bufio.NewReader(tcpConn)
 	}
 	if server.ServerOpts.DumpOutputWriter != nil {
-		c.controlWriter = bufio.NewWriter(io.MultiWriter(tcpConn, server.ServerOpts.DumpInputWriter))
+		c.controlWriter = bufio.NewWriter(io.MultiWriter(tcpConn, server.ServerOpts.DumpOutputWriter))
 	} else {
 		c.controlWriter = bufio.NewWriter(tcpConn)
 	}
