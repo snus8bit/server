@@ -132,7 +132,8 @@ func serverOptsWithDefaults(opts *ServerOpts) *ServerOpts {
 
 	newOpts.PublicIp = opts.PublicIp
 	newOpts.PassivePorts = opts.PassivePorts
-
+	newOpts.DumpInputWriter = opts.DumpInputWriter
+	newOpts.DumpOutputWriter = opts.DumpOutputWriter
 	return &newOpts
 }
 
