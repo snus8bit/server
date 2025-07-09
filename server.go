@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 )
@@ -60,6 +61,10 @@ type ServerOpts struct {
 
 	// A logger implementation, if nil the StdLogger is used
 	Logger Logger
+
+	// copy raw trafic bytes
+	DumpInputWriter  io.Writer
+	DumpOutputWriter io.Writer
 }
 
 // Server is the root of your FTP application. You should instantiate one
@@ -164,8 +169,16 @@ func (server *Server) newConn(tcpConn net.Conn, driver Driver) *Conn {
 	c := new(Conn)
 	c.namePrefix = "/"
 	c.conn = tcpConn
-	c.controlReader = bufio.NewReader(tcpConn)
-	c.controlWriter = bufio.NewWriter(tcpConn)
+	if server.ServerOpts.DumpInputWriter != nil {
+		c.controlReader = bufio.NewReader(io.TeeReader(tcpConn, server.ServerOpts.DumpInputWriter))
+	} else {
+		c.controlReader = bufio.NewReader(tcpConn)
+	}
+	if server.ServerOpts.DumpOutputWriter != nil {
+		c.controlWriter = bufio.NewWriter(io.MultiWriter(tcpConn, server.ServerOpts.DumpInputWriter))
+	} else {
+		c.controlWriter = bufio.NewWriter(tcpConn)
+	}
 	c.driver = driver
 	c.auth = server.Auth
 	c.server = server
